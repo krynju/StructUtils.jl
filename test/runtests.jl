@@ -306,6 +306,19 @@ println("Q")
     @test StructUtils.arraylike(1) == false
 end
 
+@testset "Vector{Union{}} is arraylike, not dictlike" begin
+    # Union{} <: Pair, so Vector{Union{}} used to match dictlike(::Type{<:AbstractVector{<:Pair}})
+    @test !StructUtils.dictlike(Vector{Union{}})
+    @test StructUtils.arraylike(Vector{Union{}})
+    @test StructUtils.dictlike(Vector{<:Pair})
+    @test StructUtils.dictlike(Vector{Pair{String,Int}})
+    @test StructUtils.make(Vector{Union{}}, Any[]) == Union{}[]
+    @test StructUtils.make(Vector{Union{}}, Dict{String,Any}()) == Union{}[]
+    @test StructUtils.make(Union{Vector{Union{}},Dict{String,Any}}, Any[]) == Union{}[]
+    @test StructUtils.make(Union{Vector{Union{}},Dict{String,Any}}, Dict("a" => 1)) == Dict("a" => 1)
+    @test_throws ArgumentError StructUtils.make(Vector{Union{}}, Any[1])
+end
+
 @testset "applyeach with Pair" begin
     # Basic functionality - collect key-value pairs
     collected = []

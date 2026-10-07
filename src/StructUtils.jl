@@ -40,6 +40,9 @@ dictlike(st::StructStyle, x) = dictlike(st, typeof(x))
 dictlike(::StructStyle, T::Type) = dictlike(T)
 dictlike(::Type{<:AbstractDict}) = true
 dictlike(::Type{<:AbstractVector{<:Pair}}) = true
+# `Union{}` is a subtype of `Pair`, so `Vector{Union{}}` would otherwise match the method
+# above; a vector that can hold no `Pair` (or anything) is an empty array, not a dict
+dictlike(::Type{<:AbstractVector{Union{}}}) = false
 dictlike(@nospecialize(T)) = false
 
 """
