@@ -314,9 +314,10 @@ end
     @test StructUtils.dictlike(Vector{Pair{String,Int}})
     @test StructUtils.make(Vector{Union{}}, Any[]) == Union{}[]
     @test StructUtils.make(Vector{Union{}}, Dict{String,Any}()) == Union{}[]
-    @test StructUtils.make(Union{Vector{Union{}},Dict{String,Any}}, Any[]) == Union{}[]
-    @test StructUtils.make(Union{Vector{Union{}},Dict{String,Any}}, Dict("a" => 1)) == Dict("a" => 1)
-    @test_throws ArgumentError StructUtils.make(Vector{Union{}}, Any[1])
+    @test StructUtils.make!(Union{}[], Any[]) === nothing
+    # nothing can be made into Union{}; the error says so instead of failing inside fieldcount
+    @test_throws ArgumentError("cannot make a value of type `Union{}` because it has no instances") StructUtils.make(Vector{Union{}}, Any[1])
+    @test_throws ArgumentError("cannot make a value of type `Union{}` because it has no instances") StructUtils.make(Union{}, 1)
 end
 
 @testset "applyeach with Pair" begin

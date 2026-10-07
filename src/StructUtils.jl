@@ -33,6 +33,10 @@ Returns `true` if `x` or type `T` is dictionary-like, `false` otherwise.
 When `StructUtils.make(T, source)` is called, if `dictlike(T)` is `true`,
 an instance will be `initialize`d, and then `addkeyval!`ed for each
 key-value pair in `source`.
+
+`AbstractDict`s and `AbstractVector`s of `Pair`s are `dictlike` by default.
+A vector with element type `Union{}` is not, even though `Union{} <: Pair`:
+it can hold nothing, so it is treated as an (empty) array.
 """
 function dictlike end
 
@@ -1187,6 +1191,7 @@ function make(style::StructStyle, ::Type{T}, source) where {T}
             selected === nothing || return make(style, selected, source)
         end
     end
+    T === Union{} && _bottom_error()
     if T <: Tuple
         return maketuple(style, T, _lowerrootsource(style, source))
     elseif dictlike(style, T)
@@ -1221,6 +1226,12 @@ end
 # error naming the field. The message holds no type, so it is safe under `juliac --trim`.
 @noinline _absentfield_error(name) =
     throw(ArgumentError(string("field `", name, "` has no default and is absent from the source")))
+
+# `Union{}` has no instances, so no source can be made into it. Without this check it
+# would fall into the `T <: Tuple` branch (`Union{}` is a subtype of every type) and fail
+# inside `fieldcount` with an unrelated message. The message holds no type for `--trim`.
+@noinline _bottom_error() =
+    throw(ArgumentError("cannot make a value of type `Union{}` because it has no instances"))
 @inline function _absentfield(default, ::Type{FT}, name) where {FT}
     default === nothing || return default
     Nothing <: FT && return nothing
